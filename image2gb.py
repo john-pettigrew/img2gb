@@ -3,35 +3,46 @@
 import sys
 from PIL import Image
 
-def print_hex(value):
-    print("0x{:02x}".format(value), end='')
+hex_map = {
+        56:("1", "1"),
+        98:("1", "0"),
+        172:("0", "1"),
+        188:("0", "0"),
+}
+
 
 
 if len(sys.argv) != 2:
     print("Usage is: image2gb [image_path]")
     exit(1)
 
-print("unsigned char MySprite[] =\n{\n", end='')
+values = []
+
 
 image_path = sys.argv[1]
 
 im = Image.open(image_path)
 width, height = im.size
 
-for y in range(0, height):
-    for x in range(0, width):
-        colors = im.getpixel((x, y))
-        if colors[1] == 0:
-            print_hex(colors[1])
-        else:
-            print_hex(colors[1] + 67)
+for x in range(0, width, 8):
+    for y in range(0, height):
+        byteA = ""
+        byteB = ""
 
-        if x == width - 1:
-            print()
-            if y == height - 1:
-                continue;
-        else:
-            print(", ", end='')
+        for current_pixel in range(0, 8):
+            colors = im.getpixel((x + current_pixel, y))
+            byteA += hex_map[colors[1]][1]
+            byteB += hex_map[colors[1]][0]
 
 
+        values.append('0x' + format(int(byteA, 2), '02x'))
+        values.append('0x' + format(int(byteB, 2), '02x'))
+
+
+print("unsigned char MySprite[] =\n{\n", end='')
+for i in range(0, len(values), 8):
+    print('\t', end='')
+    for j in range(0, 8):
+        print(values[i + j] + ', ', end='')
+    print('\n', end='')
 print("};\n", end='')
